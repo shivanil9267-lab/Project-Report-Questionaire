@@ -59,6 +59,48 @@ function App() {
     }, 100);
   };
 
+  // Robust Copy Function
+  const copyToClipboard = (text: string) => {
+    const fallbackCopy = () => {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      
+      // Ensure textarea is not visible but part of DOM
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          alert('Link copied to clipboard!');
+        } else {
+          alert('Could not copy link automatically. Please copy the URL from the address bar.');
+        }
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+        alert('Could not copy link automatically. Please copy the URL from the address bar.');
+      }
+      
+      document.body.removeChild(textArea);
+    };
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => alert('Link copied to clipboard!'))
+        .catch((err) => {
+          console.warn('Clipboard API failed, trying fallback...', err);
+          fallbackCopy();
+        });
+    } else {
+      fallbackCopy();
+    }
+  };
+
   const handleShare = async () => {
     const shareData = {
       title: 'Economic Cost of Poor Civic Sense',
@@ -71,13 +113,10 @@ function App() {
         await navigator.share(shareData);
       } catch (err) {
         console.log('Share API failed or cancelled, falling back to clipboard', err);
-        // Fallback to clipboard
-        navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
+        copyToClipboard(window.location.href);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      copyToClipboard(window.location.href);
     }
   };
 
